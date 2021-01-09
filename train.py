@@ -125,7 +125,9 @@ def main():
 
             next_states, rewards, dones, real_dones, log_rewards, next_obs = [], [], [], [], [], []
             for action in actions:
-                s, r, d, info = env.step(action)
+                s, r, d, info = env.step(action, record_achieved_goal = True)
+                achieved_goal_text = env.get_achieved_goals()
+                #print("ACHIEVED: ", achieved_goal_text)
                 s = s.reshape(1, 3, 64, 64)
                 next_states = s
                 rewards = r
@@ -163,7 +165,9 @@ def main():
                 sample_episode += 1
                 writer.add_scalar('data/reward_per_epi', sample_rall, sample_episode)
                 print("Episode: %d Sum of rewards: %.2f. Length: %d." % (sample_episode, sample_rall, sample_step))
+                obs = env.reset()
                 obs = obs.reshape(1, 3, 64, 64)
+                states = obs
                 sample_rall = 0
                 sample_step = 0
                 break
