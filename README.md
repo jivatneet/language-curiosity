@@ -2,7 +2,7 @@
 
 
 ## Prerequisites (in order)
-[Mujoco License](https://www.roboti.us/license.html) (For instructions to set up, refer to readme of DeepMind's [dm\_control](https://github.com/deepmind/dm_control)
+[Mujoco License](https://www.roboti.us/license.html) (For instructions to set up, refer to readme of DeepMind's [dm\_control](https://github.com/deepmind/dm_control))
 [Clevr-robot environment](https://github.com/google-research/clevr_robot_env)
 
 ## Installation and Usage
