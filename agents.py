@@ -207,13 +207,9 @@ class ICMAgent(object):
 
         with torch.no_grad():
             log_prob_old = torch.stack(log_prob_old, dim = 0).to(self.device)
-            # ------------------------------------------------------------
-
-        x = []
-        y = []
+            # -------------------------------------------------------------
 
         for i in range(self.epoch):
-            x.append(i)
             loss_sum = 0
             np.random.shuffle(sample_range)
             for j in range(int(len(s_batch) / self.batch_size)):
@@ -304,8 +300,6 @@ class ICMAgent(object):
                 loss_sum += loss
 
             # print("epoch: {} loss:{}".format(i, loss_sum))
-            y.append(loss_sum)
-        plt.plot(x,y)
 
 
     def clear_actions(self):
