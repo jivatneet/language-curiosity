@@ -17,5 +17,5 @@ pip install -r requirements.txt
 2. For training
  ```
 cd ..
-python language-curiosity/train_qa.py
+python language-curiosity/train_qa.py --program_generator <path/to/pg> --execution_engine <path/to/ee>
  ```
