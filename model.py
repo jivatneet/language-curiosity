@@ -113,12 +113,6 @@ class CnnActorCriticNetwork(nn.Module):
             linear(512, output_size)
         )
 
-        self.actor_1 = nn.Sequential(
-            linear(512, 512),
-            nn.LeakyReLU(),
-            linear(512, output_size)
-        )
-
         self.critic = nn.Sequential(
             linear(512, 512),
             nn.LeakyReLU(),
@@ -139,11 +133,6 @@ class CnnActorCriticNetwork(nn.Module):
                 init.orthogonal_(self.actor[i].weight, 0.01)
                 self.actor[i].bias.data.zero_()
 
-        for i in range(len(self.actor_1)):
-            if type(self.actor_1[i]) == nn.Linear:
-                init.orthogonal_(self.actor_1[i].weight, 0.01)
-                self.actor_1[i].bias.data.zero_()
-
         for i in range(len(self.critic)):
             if type(self.critic[i]) == nn.Linear:
                 init.orthogonal_(self.critic[i].weight, 0.01)
@@ -151,15 +140,10 @@ class CnnActorCriticNetwork(nn.Module):
 
     def forward(self, state):
         x = self.feature(state)
-        # policy = self.actor(x)
-        mu = self.actor(x)
-        sigma = self.actor_1(x)
+        policy = self.actor(x)
         value = self.critic(x)
-        # discrete action space
-        # return policy, value
+        return policy, value
 
-        # continuous action space
-        return value, F.softsign(mu), sigma
 
 class ICMModel(nn.Module):
     def __init__(self, input_size, output_size, use_cuda=True):
@@ -230,13 +214,6 @@ class ICMModel(nn.Module):
         # get pred action
         pred_action = torch.cat((encode_state, encode_next_state), 1)
         pred_action = self.inverse_net(pred_action)
-
-        pred_action[torch.isnan(pred_action)] = 0
-
-        # linear rescale to range [-1, 1.1]
-        scaling_factor = (1.1 - (-1))/(pred_action.max() - pred_action.min())
-        pred_action = (pred_action - pred_action.min()) * scaling_factor
-        pred_action += -1
         # ---------------------
 
         # get pred next state
