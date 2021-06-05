@@ -83,7 +83,7 @@ class ICMAgent(object):
         intrinsic_reward = self.eta * F.mse_loss(real_next_state_feature, pred_next_state_feature, reduction='none').mean(-1)
         return intrinsic_reward.data.cpu().numpy()
 
-    def train_model(self, s_batch, next_s_batch, rep_batch, next_rep_batch, target_batch, y_batch, adv_batch, old_policy):
+    def train_model(self, s_batch, next_s_batch, rep_batch, next_rep_batch, target_batch, y_batch, adv_batch, old_policy, action_ques):
         s_batch = torch.FloatTensor(s_batch).to(self.device)
         next_s_batch = torch.FloatTensor(next_s_batch).to(self.device)
         rep_batch = torch.FloatTensor(rep_batch).to(self.device)
@@ -91,6 +91,7 @@ class ICMAgent(object):
         target_batch = torch.FloatTensor(target_batch).to(self.device)
         y_batch = torch.LongTensor(y_batch).to(self.device)
         adv_batch = torch.FloatTensor(adv_batch).to(self.device)
+        action_ques = torch.LongTensor(action_ques).to(self.device)
 
         sample_range = np.arange(len(s_batch))
         ce = nn.CrossEntropyLoss()
@@ -111,20 +112,60 @@ class ICMAgent(object):
 
                 # --------------------------------------------------------------------------------
                 # for Curiosity-driven
-                action_onehot = torch.FloatTensor(self.batch_size, self.output_size).to(self.device)
-                action_onehot.zero_()
-                action_onehot.scatter_(1, y_batch[sample_idx].view(-1, 1), 1)
-                # real_next_state_feature, pred_next_state_feature, pred_action = self.icm(
-                #    [s_batch[sample_idx], next_s_batch[sample_idx], action_onehot])
-                real_next_state_feature, pred_next_state_feature, pred_action = self.icm(
-                    [rep_batch[sample_idx], next_rep_batch[sample_idx], action_onehot])
+                mul_factor = int(len(rep_batch)/len(s_batch))
+                # print("MUL: ", mul_factor)
+                qa_sample_idx = [index * mul_factor for index in sample_idx]
+                index_list = []
+                for index in qa_sample_idx:
+                    for k in range(mul_factor):
+                        index_list.append(index + k)
+                index = 0
+                total_pred_action, total_real_feature, total_pred_feature = [], [], []
+                inv_loss, fwd_loss = [], []
+                while index < len(index_list):
 
+                    action_onehot = torch.FloatTensor(self.batch_size, self.output_size).to(self.device)
+                    action_onehot.zero_()
+                    sample_idx_ques = index_list[index: index + self.batch_size]
+                    # print("SAMPLE: ", len(sample_idx_ques), len(sample_idx))
+                    action_onehot.scatter_(1, action_ques[sample_idx_ques].view(-1, 1), 1)
+                    # real_next_state_feature, pred_next_state_feature, pred_action = self.icm(
+                    #    [s_batch[sample_idx], next_s_batch[sample_idx], action_onehot])
+                    real_next_state_feature, pred_next_state_feature, pred_action = self.icm(
+                    [rep_batch[sample_idx_ques], next_rep_batch[sample_idx_ques], action_onehot])
+                    inverse_loss = ce(
+                        pred_action, action_ques[sample_idx_ques])
+
+                    forward_loss = forward_mse(
+                        pred_next_state_feature, real_next_state_feature.detach())
+                    inv_loss.append(inverse_loss)
+                    fwd_loss.append(forward_loss)
+
+                    index += self.batch_size
+
+                    '''
+                    for l in range(len(pred_action)):
+                        total_pred_action.append(pred_action[l])
+                        total_real_feature.append(real_next_state_feature[l].detach())
+                        total_pred_feature.append(pred_next_state_feature[l])
+
+                    index += self.batch_size
+                
+                total_pred_action = np.stack(total_pred_action)
+                print("TOT PRED STAKC: ", total_pred_action.shape)
+                total_pred_action = torch.FloatTensor(total_pred_action).to(self.device)
+                total_pred_feature = torch.FloatTensor(total_pred_feature).to(self.device)
+                total_real_feature = torch.FloatTensor(total_real_feature)
 
                 inverse_loss = ce(
-                    pred_action, y_batch[sample_idx])
+                    total_pred_action, action_ques[index_list])
 
                 forward_loss = forward_mse(
-                    pred_next_state_feature, real_next_state_feature.detach())
+                    total_pred_feature, total_real_feature) #pred_next_state_feature, real_next_state_feature.detach())
+                '''
+
+                inverse_loss = sum(inv_loss) / len(inv_loss)
+                forward_loss = sum(fwd_loss)/ len(fwd_loss)
                 # ---------------------------------------------------------------------------------
 
                 policy, value = self.model(s_batch[sample_idx])

@@ -153,6 +153,20 @@ class ICMModel(nn.Module):
         self.output_size = output_size
         self.device = torch.device('cuda' if use_cuda else 'cpu')
 
+        feature_output = 4 * 512
+        self.feature = nn.Sequential(
+            nn.Conv2d(
+                in_channels=128,
+                out_channels=512,
+                kernel_size=1),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(
+                kernel_size=2,
+                stride=2),
+            Flatten(),
+            nn.Linear(feature_output, 512)
+        )
+        '''
         feature_output = 4 * 4 * 64
         self.feature = nn.Sequential(
             nn.Conv2d(
@@ -176,6 +190,7 @@ class ICMModel(nn.Module):
             Flatten(),
             nn.Linear(feature_output, 512)
         )
+        '''
 
         self.inverse_net = nn.Sequential(
             nn.Linear(512 * 2, 512),
