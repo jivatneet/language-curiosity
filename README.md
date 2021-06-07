@@ -18,4 +18,7 @@ pip install -r requirements.txt
  ```
 cd ..
 python language-curiosity/train_qa.py --program_generator <path/to/pg> --execution_engine <path/to/ee>
- ```
+
+To Do:
+- Update requirements.txt
+- Add compatible CLEVR code
