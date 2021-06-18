@@ -153,6 +153,20 @@ class ICMModel(nn.Module):
         self.output_size = output_size
         self.device = torch.device('cuda' if use_cuda else 'cpu')
 
+        feature_output = 4 * 512
+        self.feature = nn.Sequential(
+            nn.Conv2d(
+                in_channels=128,
+                out_channels=512,
+                kernel_size=1),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(
+                kernel_size=2,
+                stride=2),
+            Flatten(),
+            nn.Linear(feature_output, 512)
+        )
+        '''
         feature_output = 4 * 4 * 64
         self.feature = nn.Sequential(
             nn.Conv2d(
@@ -176,6 +190,7 @@ class ICMModel(nn.Module):
             Flatten(),
             nn.Linear(feature_output, 512)
         )
+        '''
 
         self.inverse_net = nn.Sequential(
             nn.Linear(512 * 2, 512),
@@ -230,3 +245,39 @@ class ICMModel(nn.Module):
 
         real_next_state_feature = encode_next_state
         return real_next_state_feature, pred_next_state_feature, pred_action
+
+# calculate goal reaching probablities
+class MLP(nn.Module):
+    def __init__(self, input_size, output_size, fc_dims, proj_dim, use_cuda=True):
+        super(MLP, self).__init__()
+
+        self.input_size = input_size
+        self.output_size = output_size
+        self.device = torch.device('cuda' if use_cuda else 'cpu')
+
+        module_C, module_H, module_W = input_size
+        layers = []
+        layers.append(nn.Conv2d(module_C, proj_dim, kernel_size=1))
+        layers.append(nn.ReLU())
+        prev_dim = proj_dim * module_H * module_W
+        layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+        prev_dim //= 4
+        layers.append(Flatten())
+        for next_dim in fc_dims:
+            layers.append(nn.Linear(prev_dim, next_dim))
+            layers.append(nn.ReLU())
+            prev_dim = next_dim
+        layers.append(nn.Linear(prev_dim, output_size))
+        layers.append(nn.Sigmoid())
+        print("PREV DIM: ", prev_dim)
+
+        self.prob_network = nn.Sequential(*layers)
+
+    def forward(self, inputs):
+        gc_prob = self.prob_network(inputs)
+        return gc_prob
+
+# non-parametric pooling
+class MaxPool(nn.Module):
+    def forward(self, x):
+        return
