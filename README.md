@@ -1,5 +1,5 @@
 # Language-Curiosity
-
+Code associated with the ICLR 2021 workshop paper [Ask & Explore: Grounded Question Answering for Curiosity-driven exploration](https://arxiv.org/abs/2104.11902).
 
 ## Prerequisites (in order)
 [Mujoco License](https://www.roboti.us/license.html) (For instructions to set up, refer to readme of DeepMind's [dm\_control](https://github.com/deepmind/dm_control))
