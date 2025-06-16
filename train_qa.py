@@ -71,8 +71,8 @@ def main(args):
 
     is_load_model = False
     is_render = False
-    model_path = '/home/paul/jivat/curiosity-pretrained-vqa/language-curiosity/models/cnnlstm02-gt/{}.model'.format(env_id)
-    icm_path = '/home/paul/jivat/curiosity-pretrained-vqa/language-curiosity/models/cnnlstm02-gt/{}.icm'.format(env_id)
+    model_path = './curiosity-pretrained-vqa/language-curiosity/models/cnnlstm02-gt/{}.model'.format(env_id)
+    icm_path = './jivat/curiosity-pretrained-vqa/language-curiosity/models/cnnlstm02-gt/{}.icm'.format(env_id)
 
     writer = SummaryWriter()
 
@@ -82,7 +82,7 @@ def main(args):
 
     save_video = default_config.getboolean('SaveVideo')
     video_interval = 500
-    save_dir = '/home/paul/jivat/curiosity-pretrained-vqa/language-curiosity/videos-epoch3-gt'
+    save_dir = './curiosity-pretrained-vqa/language-curiosity/videos-epoch3-gt'
 
     lam = float(default_config['Lambda'])
     num_worker = int(default_config['NumEnv'])
